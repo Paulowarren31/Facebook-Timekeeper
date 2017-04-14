@@ -3,7 +3,6 @@
   "name": "Facebook timekeeper",
   "version": "0.1",
   "description": "keeps info on your time spent on Facebook",
-  "content_scripts": [],
 
   "permissions": [
     "tabs",
@@ -11,6 +10,6 @@
     "activeTab"
   ],
   "background": {
-    "scripts": ["jquery.js", "background.js"]
+    "scripts": ["js/jquery.js", "js/background.js"]
   }
 }
