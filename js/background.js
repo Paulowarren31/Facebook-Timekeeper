@@ -5,7 +5,16 @@ $(function(){
   })
   onFacebookVisit()
   onFacebookLeave()
+
+  browserClick()
+
 })
+
+function browserClick(){
+  chrome.browserAction.onClicked.addListener(function(tab){
+    chrome.tabs.create({'url': chrome.extension.getURL('summary.html'), 'selected': true});
+  })
+}
 
 function tabMinimizedHandler(){
   chrome.windows.onFocusChanged.addListener(function(){
