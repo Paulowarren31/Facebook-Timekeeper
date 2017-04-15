@@ -19,6 +19,37 @@ $(function(){
     })
   })
 
+  chrome.windows.onFocusChanged.addListener(function(){
+    chrome.windows.getCurrent(function(win){
+      if(win.state == "minimized"){
+        console.log("minimized")
+        //chrome minimized
+        chrome.storage.sync.get("running_sessions", function(res){
+          if(res.running_sessions){
+            pauseSessions(res.running_sessions)
+          }
+        })
+
+      }
+      else if(win.state == "maximized"){
+        console.log(win.state)
+
+        chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+
+          chrome.storage.sync.get("running_sessions", function(res){
+            if(tabs[0] && res.running_sessions){
+
+              console.log(tabs[0].id)
+              let session = res.running_sessions[tabs[0].id]
+              if(session) unPauseSession(session)
+            }
+          })
+        });
+      }
+    })
+  })
+
+
 })
 
 
@@ -36,18 +67,6 @@ function browserClick(){
 }
 
 function tabMinimizedHandler(){
-  chrome.windows.onFocusChanged.addListener(function(){
-    chrome.windows.getCurrent(function(win){
-      if(win.state == "minimized"){
-        console.log('minimized')
-        //chrome minimized
-      }
-      else{
-        console.log('maximized')
-        //chrome maximized
-      }
-    })
-  })
 }
 
 function tabChange(){
@@ -96,19 +115,20 @@ function getTimeSession(session){
 function pauseSessions(running_sessions){
 
   for(var key in running_sessions){
-    console.log('paused session ', key)
     sess = running_sessions[key]
+    console.log(sess)
     if(sess.isRunning){
+      console.log('paused session ', key)
       let time = getTimeSession(sess)
       sess.isRunning = false;
-      sess.time += time;
+      sess.time += time; //running total of time spent on that session if it is paused
       sess.start = "";
       running_sessions[key] = sess;
+      chrome.storage.sync.set({running_sessions: running_sessions});
     }
   }
   console.log(running_sessions)
 
-  chrome.storage.sync.set({running_sessions: running_sessions});
 
 }
 
@@ -129,12 +149,7 @@ function stopSession(res, tabId, callback){
   let session = res.running_sessions[tabId]
 
   let timeSpent = getTimeSession(session)
-  console.log(timeSpent)
-  hours = Math.floor(timeSpent/3600)
-  mins = Math.floor((timeSpent % 3600)/60)
-  secs = Math.round((timeSpent % 60)* 100) / 100
-
-  session.time = hours + ":" + mins + ":" + secs
+  session.time = timeSpent
 
   if(res.time){
     res.time += timeSpent
