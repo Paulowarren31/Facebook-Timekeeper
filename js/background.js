@@ -7,8 +7,24 @@ $(function(){
 
   browserClick()
 
+  chrome.tabs.onActivated.addListener(function(info){
+    chrome.storage.sync.get("running_sessions", function(res){
+      if(res.running_sessions){
+        let session = res.running_sessions[info.tabId]
+        if(session) unPauseSession(session)
+        else{
+          pauseSessions(res.running_sessions)
+        }
+      }
+    })
+  })
+
 })
 
+
+function create(){
+  chrome.storage.sync.set({running_sessions: {}})
+}
 function clear(){
   chrome.storage.sync.clear(function(){})
 }
@@ -51,27 +67,74 @@ function startSession(tabId, url){
   var session = {
     start: new Date().toString(),
     tab: tabId, //sets tab id of this session
-    url: url
+    url: url,
+    isRunning: true,
+    time: 0
   }
 
-  chrome.storage.sync.set({session: session}, function(){
-    console.log('session started')
+  chrome.storage.sync.get("running_sessions", function(res){
+    if(!res.running_sessions) res.running_sessions = {} //create it if it doesnt exist
+
+    res.running_sessions[tabId] = session;
+
+    chrome.storage.sync.set({running_sessions: res.running_sessions}, function(){
+      console.log('session added')
+      console.log(res.running_sessions)
+    })
+
   })
+
 }
 
 function getTimeSession(session){
-  total = (new Date().getTime() - new Date(session.start).getTime()) / 1000;
-  return total
+  if(session.isRunning){
+    return ((new Date().getTime() - new Date(session.start).getTime()) / 1000) + session.time;
+  }
+  else return session.time
 }
 
-function stopSession(res, callback){
-  console.log(res.session)
-  var timeSpent = getTimeSession(res.session)
+function pauseSessions(running_sessions){
+
+  for(var key in running_sessions){
+    console.log('paused session ', key)
+    sess = running_sessions[key]
+    if(sess.isRunning){
+      let time = getTimeSession(sess)
+      sess.isRunning = false;
+      sess.time += time;
+      sess.start = "";
+      running_sessions[key] = sess;
+    }
+  }
+  console.log(running_sessions)
+
+  chrome.storage.sync.set({running_sessions: running_sessions});
+
+}
+
+function unPauseSession(session){
+  session.isRunning = true;
+  session.start = new Date().toString()
+
+  console.log('resume session', session)
+
+  chrome.storage.sync.get("running_sessions", function(res){
+    res.running_sessions[session.tab] = session;
+    chrome.storage.sync.set({running_sessions: res.running_sessions});
+  })
+}
+
+
+function stopSession(res, tabId, callback){
+  let session = res.running_sessions[tabId]
+
+  let timeSpent = getTimeSession(session)
+  console.log(timeSpent)
   hours = Math.floor(timeSpent/3600)
   mins = Math.floor((timeSpent % 3600)/60)
   secs = Math.round((timeSpent % 60)* 100) / 100
 
-  res.session.time = hours + ":" + mins + ":" + secs
+  session.time = hours + ":" + mins + ":" + secs
 
   if(res.time){
     res.time += timeSpent
@@ -81,10 +144,10 @@ function stopSession(res, callback){
 
   chrome.storage.sync.get("sessions", function(r){
     if(!r.sessions) r.sessions = []
+    r.sessions.push(session)
+    res.running_sessions[tabId] = undefined
 
-    r.sessions.push(res.session)
-
-    chrome.storage.sync.set({session: -1, time: res.time, sessions: r.sessions}, function(){
+    chrome.storage.sync.set({running_sessions: res.running_sessions, time: res.time, sessions: r.sessions}, function(){
       console.log('session stopped, new time is ' + res.time)
       callback()
     })
@@ -98,13 +161,22 @@ function onFacebookVisit(){
 
     //facebook page loaded, check for profile
     if(changeInfo.status == "complete" && tab.url.includes("https://www.facebook.com")){
-      chrome.tabs.sendMessage(tabId, {url: tab.url}, function(res){
-        chrome.storage.sync.get("session", function(r){
-          if(res && tab.url == r.session.url){
-            r.session.profile = res
-            chrome.storage.sync.set({session: r.session}, function(){
-              console.log("updated session with profile info")
-            })
+      //send message to content script
+      chrome.tabs.sendMessage(tabId, {url: tab.url}, function(profile){
+
+        chrome.storage.sync.get("running_sessions", function(r){
+          if(r.running_sessions){
+            let session = r.running_sessions[tabId]
+
+            if(profile && tab.url == session.url){
+              session.profile = profile
+              r.running_sessions[tabId] = session
+
+              chrome.storage.sync.set({running_sessions: r.running_sessions}, function(){
+                console.log(r.running_sessions)
+                console.log("updated running sessions session with profile info")
+              })
+            }
           }
         })
       })
@@ -113,18 +185,25 @@ function onFacebookVisit(){
     //loading a facebook page
     if(changeInfo.status == "loading"  && changeInfo.url &&
       changeInfo.url.includes("https://www.facebook.com")){
-        chrome.storage.sync.get(["session", "time"], function(res){
+
+        //get current sessions and global time
+        chrome.storage.sync.get(["running_sessions", "time"], function(res){
+
           console.log(res)
-          if(res.session == -1 || !res.session){
-            //starts new session
-            startSession(tabId, changeInfo.url)
-          }
-          else{
-            console.log("session running, stopping old one and starting new one")
-            stopSession(res, function(){
+          if(res.running_sessions){
+            let session = res.running_sessions[tabId]
+
+            if(!session){
+              //starts new session
               startSession(tabId, changeInfo.url)
-            })
+            }
+            else{
+              stopSession(res, tabId, function(){
+                startSession(tabId, changeInfo.url)
+              })
+            }
           }
+
         })
 
       }
@@ -133,10 +212,14 @@ function onFacebookVisit(){
 
 function onFacebookLeave(){
   chrome.tabs.onRemoved.addListener(function(tabId, changeInfo){
-    chrome.storage.sync.get(["session", "time"], function(res){
-      if(res.session.tab == tabId){
-        console.log('facebook closed, end session')
-        stopSession(res, function(){})
+    chrome.storage.sync.get(["running_sessions", "time"], function(res){
+      if(res.running_sessions){
+        let session = res.running_sessions[tabId]
+
+        if(session && session.tab == tabId){
+          console.log('facebook closed, end session')
+          stopSession(res, tabId, function(){})
+        }
       }
     })
   })
