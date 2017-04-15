@@ -27,11 +27,11 @@ chrome.storage.sync.get(["time", "sessions"], function(res){
 
 function timeString(time){
 
-  hours = Math.floor(time/3600)
-  mins = Math.floor((time % 3600)/60)
-  secs = Math.round(time % 60)
+  var date = new Date(null)
+  date.setSeconds(time)
 
-  return hours + ":" + mins + ":" + secs
+  return date.toISOString().substr(11,8);
+
 }
 
 //combines duplicate sessions and filters sessions that werent profiles/pages
