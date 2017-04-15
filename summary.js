@@ -2,7 +2,9 @@ console.log('summary')
 chrome.storage.sync.get(["time", "sessions"], function(res){
   console.log(res.time)
 
+  console.log(res.sessions)
   combinedSessions = combineDuplicates(res.sessions)
+  console.log(combinedSessions)
 
   for(session in combinedSessions){
     session = combinedSessions[session]
@@ -38,11 +40,11 @@ function combineDuplicates(sessions){
   var combine = []
   sessions.forEach(function(a){
     if(a.profile){
-      if(!this[a.url]){
-        this[a.url] = {name: a.profile.name, time: 0, src: a.profile.src}
-        combine.push(this[a.url])
+      if(!this[a.profile.src]){
+        this[a.profile.src] = {name: a.profile.name, time: 0, src: a.profile.src}
+        combine.push(this[a.profile.src])
       }
-      this[a.url].time += a.time
+      this[a.profile.src].time += a.time
     }
   }, Object.create(null))
 
