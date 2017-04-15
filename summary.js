@@ -1,29 +1,41 @@
-console.log('summary')
-chrome.storage.sync.get(["time", "sessions"], function(res){
-  console.log(res.time)
+$(function(){
+  chrome.storage.sync.get(["time", "sessions"], function(res){
+    console.log(res.time)
 
-  console.log(res.sessions)
-  combinedSessions = combineDuplicates(res.sessions)
-  console.log(combinedSessions)
+    console.log(res.sessions)
 
-  for(session in combinedSessions){
-    session = combinedSessions[session]
+    var today = getDayOfYear(new Date())
 
-    var timestring = timeString(session.time)
+    var array = $.map(res.sessions, function(value, index) {
+      //filters only from today
+      if(index == today){
+        return value;
+      }
+    });
 
-    var newLi = '<li class="list-group-item"><div class="container"><div class="col-xs-4">'+session.name + '</div><div class="col-xs-4">'+timestring+'</div><div class="col-xs-4"><img class="rounded" src="'+session.src+'"></img></div></div></li>'
+    combinedSessions = combineDuplicates(array)
+    console.log(combinedSessions)
 
-    //p.innerHTML = session.profile.name + ' TIME SPENT: ' + session.time
-    //img.src = session.profile.src
+    for(session in combinedSessions){
+      session = combinedSessions[session]
 
-    var list = $("#profile-list")
-    list.append(newLi)
-  }
+      var timestring = timeString(session.time)
 
-  var timeDiv = $("#time")
-  var timestring = timeString(res.time)
-  timeDiv.text(timestring)
+      var newLi = '<li class="list-group-item"><div class="container"><div class="row"><div class="col my-auto">'+session.name + '</div><div class="col my-auto">'+timestring+'</div><div class="col"><img class="rounded float-right" src="'+session.src+'"></img></div></div></div></li>'
+
+      //p.innerHTML = session.profile.name + ' TIME SPENT: ' + session.time
+      //img.src = session.profile.src
+
+      var list = $("#profile-list")
+      list.append(newLi)
+    }
+
+    var timeDiv = $("#time")
+    var timestring = timeString(res.time)
+    timeDiv.text(timestring)
+  })
 })
+
 
 function timeString(time){
 
@@ -49,4 +61,12 @@ function combineDuplicates(sessions){
   }, Object.create(null))
 
   return combine
+}
+
+function getDayOfYear(date){
+  var start = new Date(date.getFullYear(), 0, 0);
+  var diff = date - start;
+  var oneDay = 1000 * 60 * 60 * 24;
+  var day = Math.floor(diff / oneDay);
+  return day
 }
