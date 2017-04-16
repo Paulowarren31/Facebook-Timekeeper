@@ -1,20 +1,14 @@
 $(function(){
   chrome.storage.sync.get(["time", "sessions"], function(res){
-    console.log(res.time)
-    console.log(res.sessions)
 
-    var today = getDayOfYear(new Date())
 
-    var array = $.map(res.sessions, function(value, index) {
-      //filters only from today
-      if(index == today){
-        return value;
-      }
-    });
-
-    combinedSessions = combineDuplicates(array)
+    //get sessions from today
+    sessions = filterToday(res.sessions)
+    //combine duplicates
+    combinedSessions = combineDuplicates(sessions)
     console.log(combinedSessions)
 
+    //if no pages found show no pages found message
     if(combinedSessions.length == 0){
       $('#nofound').removeClass('hidden')
     }
@@ -22,12 +16,11 @@ $(function(){
     for(session in combinedSessions){
       session = combinedSessions[session]
 
+      //get pretty time
       var timestring = timeString(session.time)
 
+      //ugly 
       var newLi = '<li class="list-group-item pa-3"><div class="container"><div class="row"><div class="col my-auto">'+session.name + '</div><div class="col my-auto">'+timestring+'</div><div class="col"><img class="rounded float-right" src="'+session.src+'"></img></div></div></div></li>'
-
-      //p.innerHTML = session.profile.name + ' TIME SPENT: ' + session.time
-      //img.src = session.profile.src
 
       var list = $("#profile-list")
       list.append(newLi)
@@ -72,4 +65,18 @@ function getDayOfYear(date){
   var oneDay = 1000 * 60 * 60 * 24;
   var day = Math.floor(diff / oneDay);
   return day
+}
+
+function filterToday(sessions){
+  var today = getDayOfYear(new Date())
+
+  var array = $.map(sessions, function(value, key) {
+    //filters only from today
+    if(key == today){
+      return value;
+    }
+  });
+
+  return array
+
 }
