@@ -90,7 +90,7 @@ function clear(){
 
 function browserClick(){
   chrome.browserAction.onClicked.addListener(function(tab){
-    chrome.tabs.create({'url': chrome.extension.getURL('summary.html'), 'selected': true});
+    chrome.tabs.create({'url': chrome.extension.getURL('summary/summary.html'), 'selected': true});
   })
 }
 

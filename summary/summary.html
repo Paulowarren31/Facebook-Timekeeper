@@ -22,6 +22,9 @@
                 background: #615858 !important;
                 color: white;
             }
+            .hidden{
+                display: none;
+            }
 
         </style>
 
@@ -37,6 +40,7 @@
             
             <h1>Facebook usage Summary</h1>
             <h2 class="py-3 my-3">Time spent on facebook: <div id="time" class="text-primary" style="display: inline;"></div></h2>
+            <h3 class="text-danger hidden" id="nofound"> No sessions found</h3>
             <ul class="list-group mt-3" id="profile-list">
             </ul>
         </div>

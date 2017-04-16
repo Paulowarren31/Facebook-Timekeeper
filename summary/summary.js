@@ -15,6 +15,10 @@ $(function(){
     combinedSessions = combineDuplicates(array)
     console.log(combinedSessions)
 
+    if(combinedSessions.length == 0){
+      $('#nofound').removeClass('hidden')
+    }
+
     for(session in combinedSessions){
       session = combinedSessions[session]
 
