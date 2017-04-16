@@ -1,16 +1,21 @@
 {
   "manifest_version": 2,
   "name": "Facebook timekeeper",
-  "version": "0.1",
+  "version": "1.0",
   "description": "keeps info on your time spent on Facebook",
-  "content_scripts": [],
+  "content_scripts": [{
+    "matches": ["*://www.facebook.com/*"],
+    "js": ["js/jquery.js", "js/profile.js"]
+  }],
 
   "permissions": [
     "tabs",
     "storage",
-    "activeTab"
+    "activeTab",
+    "webRequest"
   ],
   "background": {
-    "scripts": ["jquery.js", "background.js"]
-  }
+    "scripts": ["js/jquery.js", "js/background.js"]
+  },
+  "browser_action": {}
 }
