@@ -6,10 +6,11 @@ $(function(){
     sessions = filterToday(res.sessions)
     //combine duplicates
     combinedSessions = combineDuplicates(sessions)
-    console.log(combinedSessions)
+    console.log(combinedSessions.length)
 
     //if no pages found show no pages found message
     if(combinedSessions.length == 0){
+      console.log('asd')
       $('#nofound').removeClass('hidden')
     }
 
@@ -34,6 +35,7 @@ $(function(){
 
 
 function timeString(time){
+  if(!time) return '00:00:00'
 
   var date = new Date(null)
   date.setSeconds(time)

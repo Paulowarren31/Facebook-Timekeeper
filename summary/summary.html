@@ -25,6 +25,9 @@
                 background: #615858 !important;
                 color: white;
             }
+            .hidden{
+                display: none;
+            }
 
         </style>
 
@@ -37,8 +40,9 @@
     <body>
         <div class="container text-center jumbotron pb-0 px-0" style="width: 800px;">
             
-            <h1>Facebook usage Summary</h1>
+            <h1>Facebook Usage Summary</h1>
             <h2 class="py-3 my-3">Time spent on facebook today: <div id="time" class="text-primary" style="display: inline;"></div></h2>
+            <h3 class="hidden text-danger"id="nofound"> No Sessions Found </h3>
             <ul class="list-group mt-5" id="profile-list">
             </ul>
         </div>
