@@ -1,7 +1,6 @@
 $(function(){
   chrome.storage.sync.get(["time", "sessions"], function(res){
     console.log(res.time)
-
     console.log(res.sessions)
 
     var today = getDayOfYear(new Date())

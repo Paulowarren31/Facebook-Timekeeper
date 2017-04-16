@@ -7,7 +7,7 @@
         <title>Sessions</title>
         <meta name="description" content="Facebook Session Timer">
         <meta name="author" content="Paulo Warren">
-        <script src="js/jquery.js"></script>
+        <script src="../js/jquery.js"></script>
         <script src="summary.js"></script>
 
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
@@ -17,6 +17,10 @@
                 width: 100px;
                 height: 100px;
                 border: 1px solid #000000;
+            }
+            li{
+                background: #615858 !important;
+                color: white;
             }
 
         </style>
@@ -29,10 +33,11 @@
     </head>
 
     <body>
-        <div class="container text-center" style="width: 800px;">
+        <div class="container text-center jumbotron" style="width: 800px;">
+            
             <h1>Facebook usage Summary</h1>
-            <h2 class="pt-2">Time spent on facebook: <div id="time" style="display: inline;"></div></h2>
-            <ul class="list-group" id="profile-list">
+            <h2 class="py-3 my-3">Time spent on facebook: <div id="time" class="text-primary" style="display: inline;"></div></h2>
+            <ul class="list-group mt-3" id="profile-list">
             </ul>
         </div>
     </body>
