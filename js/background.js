@@ -1,4 +1,4 @@
-
+var min = false;
 $(function(){
 
   chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
@@ -12,11 +12,13 @@ $(function(){
     }
   })
 
-  onFacebookLeave()
+  chrome.tabs.onRemoved.addListener(function(tabId, changeInfo){
+    console.log('remove')
+    facebookLeave(tabId, changeInfo)
+  })
 
 
   chrome.tabs.onActivated.addListener(function(info){
-    console.log('tab')
     tabChange(info)
   })
 
@@ -39,8 +41,8 @@ function tabChange(info){
   })
 }
 
-var min = false;
 function windowChange(id){
+  if(id == -1) return;
   chrome.windows.getCurrent(function(win){
     if(win.state == "minimized"){
       if(!min){
@@ -96,7 +98,7 @@ function tabMinimizedHandler(){
 }
 
 function startSession(tabId, url){
-  console.log('new session')
+  console.log('new session', tabId)
   var session = {
     start: new Date().toString(),
     tab: tabId, //sets tab id of this session
@@ -131,7 +133,6 @@ function pauseSessions(open_sessions, except){
 
   for(var key in open_sessions){
     sess = open_sessions[key]
-    console.log(sess)
     if(sess.isRunning && sess.tab != except){
       console.log('paused session ', key)
       let time = getTimeSession(sess)
@@ -160,17 +161,11 @@ function unPauseSession(session, callback){
 
 function stopSession(res, tabId, callback){
   let session = res.open_sessions[tabId]
-
   let timeSpent = getTimeSession(session)
   session.time = timeSpent
 
-  if(res.time){
-    res.time += timeSpent
-  }
-  else res.time = timeSpent
 
-
-  chrome.storage.sync.get("sessions", function(r){
+  chrome.storage.sync.get(["sessions","time"], function(r){
     if(!r.sessions) r.sessions = {}
     var dayIdx = getDayOfYear(new Date())
     if(!r.sessions[dayIdx]) r.sessions[dayIdx] = []
@@ -178,10 +173,16 @@ function stopSession(res, tabId, callback){
     r.sessions[dayIdx].push(session)
     res.open_sessions[tabId] = undefined
 
+    if(r.time){
+      r.time += timeSpent
+    }
+    else r.time = timeSpent
+
+
     chrome.storage.sync.set({
       open_sessions: res.open_sessions,
-      time: res.time, sessions: r.sessions}, function(){
-      console.log('session stopped, new time is ' + res.time)
+      time: r.time, sessions: r.sessions}, function(){
+      console.log('session stopped, new time is ' + r.time)
       callback()
     })
 
@@ -228,32 +229,32 @@ function facebookLoading(tabId, url){
     if(res.open_sessions){
       let session = res.open_sessions[tabId]
 
+      //if previous tab wasnt a facebook tab
       if(!session){
         //starts new session
         startSession(tabId, url)
       }
       else{
+        //stops session on previous tab if it was a facebook tab
         stopSession(res, tabId, function(){
+          //starts session on this tab
           startSession(tabId, url)
         })
       }
     }
 
   })
-
 }
 
-function onFacebookLeave(){
-  chrome.tabs.onRemoved.addListener(function(tabId, changeInfo){
-    chrome.storage.sync.get(["open_sessions", "time"], function(res){
-      if(res.open_sessions){
-        let session = res.open_sessions[tabId]
+function facebookLeave(tabId, changeInfo){
+  chrome.storage.sync.get(["open_sessions", "time"], function(res){
+    if(res.open_sessions){
+      let session = res.open_sessions[tabId]
 
-        if(session && session.tab == tabId){
-          console.log('facebook closed, end session')
-          stopSession(res, tabId, function(){})
-        }
+      if(session && session.tab == tabId){
+        console.log('facebook closed, end session')
+        stopSession(res, tabId, function(){})
       }
-    })
+    }
   })
 }
