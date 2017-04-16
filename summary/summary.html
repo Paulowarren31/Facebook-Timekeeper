@@ -13,6 +13,9 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
 
         <style>
+            body{
+                background: url("../bg.png");
+            }
             img{
                 width: 100px;
                 height: 100px;
@@ -21,9 +24,6 @@
             li{
                 background: #615858 !important;
                 color: white;
-            }
-            .hidden{
-                display: none;
             }
 
         </style>
@@ -36,12 +36,11 @@
     </head>
 
     <body>
-        <div class="container text-center jumbotron" style="width: 800px;">
+        <div class="container text-center jumbotron pb-0 px-0" style="width: 800px;">
             
             <h1>Facebook usage Summary</h1>
-            <h2 class="py-3 my-3">Time spent on facebook: <div id="time" class="text-primary" style="display: inline;"></div></h2>
-            <h3 class="text-danger hidden" id="nofound"> No sessions found</h3>
-            <ul class="list-group mt-3" id="profile-list">
+            <h2 class="py-3 my-3">Time spent on facebook today: <div id="time" class="text-primary" style="display: inline;"></div></h2>
+            <ul class="list-group mt-5" id="profile-list">
             </ul>
         </div>
     </body>

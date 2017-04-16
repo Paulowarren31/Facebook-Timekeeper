@@ -24,7 +24,7 @@ $(function(){
 
       var timestring = timeString(session.time)
 
-      var newLi = '<li class="list-group-item"><div class="container"><div class="row"><div class="col my-auto">'+session.name + '</div><div class="col my-auto">'+timestring+'</div><div class="col"><img class="rounded float-right" src="'+session.src+'"></img></div></div></div></li>'
+      var newLi = '<li class="list-group-item pa-3"><div class="container"><div class="row"><div class="col my-auto">'+session.name + '</div><div class="col my-auto">'+timestring+'</div><div class="col"><img class="rounded float-right" src="'+session.src+'"></img></div></div></div></li>'
 
       //p.innerHTML = session.profile.name + ' TIME SPENT: ' + session.time
       //img.src = session.profile.src

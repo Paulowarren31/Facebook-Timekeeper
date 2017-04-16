@@ -13,7 +13,6 @@ $(function(){
   })
 
   chrome.tabs.onRemoved.addListener(function(tabId, changeInfo){
-    console.log('remove')
     facebookLeave(tabId, changeInfo)
   })
 
@@ -23,7 +22,7 @@ $(function(){
   })
 
   chrome.windows.onFocusChanged.addListener(function(id){
-    windowChange(id)
+    windowChange()
   })
 
   browserClick() // for opening resutls
@@ -42,21 +41,35 @@ function tabChange(info){
 }
 
 function windowChange(id){
-  if(id == -1) return;
+
+  if(id == -1){
+    if(!min){
+      console.log("minimized")
+      min = true;
+      //chrome minimized
+      chrome.storage.sync.get(["open_sessions"], function(res){
+        chrome.storage.sync.set
+        console.log(JSON.parse(JSON.stringify(res.open_sessions)))
+        if(res.open_sessions){
+          pauseSessions(res.open_sessions)
+        }
+      })
+    }
+    return;
+  }
+
   chrome.windows.getCurrent(function(win){
+    if(!win) return;
     if(win.state == "minimized"){
       if(!min){
-        min = true;
         console.log("minimized")
+        min = true;
         //chrome minimized
-        chrome.storage.sync.get(["open_sessions","min"], function(res){
-          console.log(res.min)
-          if(!res.min){
-            chrome.storage.sync.set
-            console.log(JSON.parse(JSON.stringify(res.open_sessions)))
-            if(res.open_sessions){
-              pauseSessions(res.open_sessions)
-            }
+        chrome.storage.sync.get(["open_sessions"], function(res){
+          chrome.storage.sync.set
+          console.log(JSON.parse(JSON.stringify(res.open_sessions)))
+          if(res.open_sessions){
+            pauseSessions(res.open_sessions)
           }
         })
       }
@@ -64,7 +77,7 @@ function windowChange(id){
     }
     else if(win.state == "maximized"){
       min = false;
-      console.log(win.state)
+      console.log("maximized")
 
       chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
         chrome.storage.sync.get("open_sessions", function(res){
@@ -74,16 +87,12 @@ function windowChange(id){
             if(session) unPauseSession(session, function(){})
           }
         })
-        chrome.storage.sync.set({min: false})
       })
     }
   })
 }
 
 
-function create(){
-  chrome.storage.sync.set({open_sessions: {}, sessions: {}})
-}
 function clear(){
   chrome.storage.sync.clear(function(){})
 }
@@ -94,22 +103,20 @@ function browserClick(){
   })
 }
 
-function tabMinimizedHandler(){
-}
 
 function startSession(tabId, url){
   console.log('new session', tabId)
+
   var session = {
-    start: new Date().toString(),
+    start: new Date().toString(), //start time of last time this session was resumed
     tab: tabId, //sets tab id of this session
     url: url,
     isRunning: true,
-    time: 0
+    time: 0 // running total in seconds of this sessions timer, is incremented on pause, also resetting start
   }
 
   chrome.storage.sync.get("open_sessions", function(res){
     if(!res.open_sessions) res.open_sessions = {} //create it if it doesnt exist
-
     res.open_sessions[tabId] = session;
 
     chrome.storage.sync.set({open_sessions: res.open_sessions}, function(){
@@ -143,7 +150,6 @@ function pauseSessions(open_sessions, except){
     }
   }
   chrome.storage.sync.set({open_sessions: open_sessions});
-  console.log(open_sessions)
 }
 
 function unPauseSession(session, callback){
@@ -165,9 +171,12 @@ function stopSession(res, tabId, callback){
   session.time = timeSpent
 
 
+  //get sessions and time to update them
   chrome.storage.sync.get(["sessions","time"], function(r){
     if(!r.sessions) r.sessions = {}
+    //get day of year 1-365 for summary by day
     var dayIdx = getDayOfYear(new Date())
+    //if new day
     if(!r.sessions[dayIdx]) r.sessions[dayIdx] = []
 
     r.sessions[dayIdx].push(session)
@@ -226,6 +235,7 @@ function facebookLoading(tabId, url){
   chrome.storage.sync.get(["open_sessions", "time"], function(res){
 
     console.log(res)
+    if(!res.open_sessions) res.open_sessions = {}
     if(res.open_sessions){
       let session = res.open_sessions[tabId]
 
